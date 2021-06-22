@@ -9,6 +9,7 @@ http://einaregilsson.com/module-initializers-in-csharp/
 This program is licensed under the MIT license: http://opensource.org/licenses/MIT
  */
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -43,7 +44,7 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
             return null;
         }
 
-        public void Inject(string assemblyFile, string moduleInitializer=null, string keyfile=null)
+        public void Inject(string assemblyFile, IEnumerable<string> additionalAssemblySearchPaths, string  moduleInitializer=null, string keyfile=null)
         {
             try
             {
@@ -55,7 +56,7 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
                 {
                     throw new InjectionException(Errors.KeyFileDoesNotExist(keyfile));
                 }
-                ReadAssembly(assemblyFile);
+                ReadAssembly(assemblyFile, additionalAssemblySearchPaths);
                 MethodReference callee = GetCalleeMethod(moduleInitializer);
                 InjectInitializer(callee);
 
@@ -101,19 +102,22 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
             Assembly.Write(assemblyFile, writeParams);
         }
 
-        private void ReadAssembly(string assemblyFile)
+        private void ReadAssembly(string assemblyFile, IEnumerable<string> additionalAssemblySearchPaths)
         {
             Debug.Assert(Assembly == null);
 
             var resolver = new DefaultAssemblyResolver();
             resolver.AddSearchDirectory(Path.GetDirectoryName(assemblyFile));
-
+            foreach (var searchPath in additionalAssemblySearchPaths)
+            {
+                resolver.AddSearchDirectory(searchPath);
+            }
             var readParams = new ReaderParameters(ReadingMode.Immediate)
             {
                 AssemblyResolver = resolver,
                 InMemory = true
             };
-            
+
             if (PdbFile(assemblyFile) != null)
             {
                 readParams.ReadSymbols = true;

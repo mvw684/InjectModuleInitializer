@@ -9,9 +9,12 @@ http://einaregilsson.com/module-initializers-in-csharp/
 This program is licensed under the MIT license: http://opensource.org/licenses/MIT
  */
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 //using EinarEgilsson.Utilities.InjectModuleInitializer.Test;
 using System.Reflection;
+using System.Security.AccessControl;
 
 namespace EinarEgilsson.Utilities.InjectModuleInitializer
 {
@@ -28,7 +31,7 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
 //            }
 //#endif
             var injector = new Injector();
-            if (args.Length == 0 || args.Length > 3 || Regex.IsMatch(args[0], @"^((/|--?)(\?|h|help))$"))
+            if (args.Length == 0 || args.Length > 4 || Regex.IsMatch(args[0], @"^((/|--?)(\?|h|help))$"))
             {
                 PrintHelp();
                 return 1;
@@ -37,7 +40,7 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
             Console.WriteLine("InjectModuleInitializer v{0}.{1}", version.Major, version.Minor);
             Console.WriteLine("");
-            
+            List<string> additionalAssemblySearchPath = new List<string>();
             string assemblyFile, moduleInitializer=null, keyfile=null;
             assemblyFile = args[args.Length - 1];
 
@@ -53,7 +56,22 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
                 {
                     keyfile = keyMatch.Groups[2].Value;
                 }
-                if (!initMatch.Success && !keyMatch.Success)
+
+                var assemblySearchPathMatch = Regex.Match(args[i], "^/a(ssemnbySearchPath)?:(.+)", RegexOptions.IgnoreCase);
+                if (assemblySearchPathMatch.Success)
+                {
+                    var tempPath = assemblySearchPathMatch.Groups[2].Value;
+                    var temPaths = tempPath.Split(new char[] {';' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var path in temPaths)
+                    {
+                        if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                        {
+                            additionalAssemblySearchPath.Add(path);
+                        }
+                    }
+
+                }
+                if (!initMatch.Success && !keyMatch.Success && !assemblySearchPathMatch.Success)
                 {
                     Console.Error.WriteLine("error: Invalid argument '{0}', type InjectModuleInitializer /? for help", args[0]);
                     return 1;
@@ -62,7 +80,7 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
 
             try
             {
-                injector.Inject(assemblyFile, moduleInitializer, keyfile);
+                injector.Inject(assemblyFile, additionalAssemblySearchPath, moduleInitializer, keyfile);
                 Console.WriteLine("Module Initializer successfully injected in assembly " + assemblyFile);
                 return 0;
             }
@@ -92,7 +110,10 @@ InjectModuleInitializer.exe [/m:<method>] [/k:<keyfile>] filename
                               look for a type name ModuleInitializer (in any
                               namespace) and look for a method named Run in
                               that type.
-
+/a:<assemblySearchPath>       Specify additional paths to search referenced assemblies
+/assemblySearchPath:<assemblySearchPath>
+                              Each entry can be a semicolon separated 'path'
+                              This argument can occur multiple times.
 /k:<keyfile>                  A strong name key file that will be used to sign
 /keyfile:<keyfile>            the assembly after the module initializer is
                               injected into it.
