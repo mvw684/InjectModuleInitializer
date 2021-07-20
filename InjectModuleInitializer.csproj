@@ -16,13 +16,14 @@
     
     <PackageTags>module initializer assembly constructor</PackageTags>
     <PackageLicenseUrl>https://github.com/einaregilsson/InjectModuleInitializer/blob/master/license.txt</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/einaregilsson/InjectModuleInitializer</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/mvw684/InjectModuleInitializer</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 
     <DevelopmentDependency>true</DevelopmentDependency>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <BuildOutputTargetFolder>tools</BuildOutputTargetFolder>
     <TargetsForTfmSpecificBuildOutput>IncludeCecil</TargetsForTfmSpecificBuildOutput>
+    <PackageId>InjectModuleInitializer.mvw684</PackageId>
   </PropertyGroup>
   
   <ItemGroup>
@@ -48,8 +49,7 @@
   </PropertyGroup>
 
   <Target Name="Version" DependsOnTargets="SetVersion">
-    <Message Importance="high" Text="PackageVersion=$(PackageVersion)
-AssemblyVersion=$(AssemblyVersion)" />
+    <Message Importance="high" Text="PackageVersion=$(PackageVersion)&#xD;&#xA;AssemblyVersion=$(AssemblyVersion)" />
     <Message Text="##vso[build.updatebuildnumber]$(PackageVersion)" Importance="high" Condition="'$(TF_BUILD)' == 'true'" />
   </Target>
 
@@ -61,10 +61,7 @@ AssemblyVersion=$(AssemblyVersion)" />
   </Target>
 
   <!-- '$(ExcludeRestorePackageImports)' == 'true' when invoking /t:Restore -->
-  <Target Name="SetVersion"
-          BeforeTargets="GetAssemblyVersion;GetPackageVersion;Pack"
-          DependsOnTargets="GitVersion"
-          Condition="'$(ExcludeRestorePackageImports)' != 'true' and '$(GitInfoImported)' == 'true'">
+  <Target Name="SetVersion" BeforeTargets="GetAssemblyVersion;GetPackageVersion;Pack" DependsOnTargets="GitVersion" Condition="'$(ExcludeRestorePackageImports)' != 'true' and '$(GitInfoImported)' == 'true'">
     <PropertyGroup>
       <!-- PR builds are *always* prerelease -->
       <!-- TFS case: BUILD_REASON=PullRequest and BUILD_SOURCEBRANCH=refs/pull/#/merge -->

@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
 InjectModuleInitializer
 
 Command line program to inject a module initializer into a .NET assembly.
@@ -57,7 +57,7 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
                     keyfile = keyMatch.Groups[2].Value;
                 }
 
-                var assemblySearchPathMatch = Regex.Match(args[i], "^/a(ssemnbySearchPath)?:(.+)", RegexOptions.IgnoreCase);
+                var assemblySearchPathMatch = Regex.Match(args[i], "^/a(ssemblySearchPath)?:(.+)", RegexOptions.IgnoreCase);
                 if (assemblySearchPathMatch.Success)
                 {
                     var tempPath = assemblySearchPathMatch.Groups[2].Value;
@@ -94,7 +94,7 @@ namespace EinarEgilsson.Utilities.InjectModuleInitializer
                 injector.Dispose();
             }
         }
-        
+
         static void PrintHelp()
         {
             Console.Error.WriteLine(@"
